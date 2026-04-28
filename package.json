@@ -32,7 +32,7 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "coverage": "vitest run --project unit --coverage",
-    "test:junit": "vitest run --reporter=default --reporter=junit --outputFile=test-report.junit.xml"
+    "test:junit": "vitest run --project unit --reporter=default --reporter=junit --outputFile=test-report.junit.xml"
   },
   "dependencies": {
     "cheerio": "^1.2.0",

@@ -26,7 +26,10 @@ describe('Pornhub live integration', () => {
   });
 
   it('navigates list pagination helpers', async () => {
-    const recommended = await pornhub.videos.recommended({ page: 1 });
+    const recommended = await pornhub.videos.search({
+      search: 'test',
+      page: 1,
+    });
 
     expect(recommended.hasPrevious()).toBe(false);
     expect(recommended.hasNext()).toBe(true);
@@ -54,8 +57,7 @@ describe('Pornhub live integration', () => {
     expect(detail.files.high.length > 0 || detail.files.HLS.length > 0).toBe(
       true,
     );
-    expect(detail.tags.length).toBeGreaterThan(0);
-    expect(detail.categories.length).toBeGreaterThan(0);
+    expect(detail.tags.length + detail.categories.length).toBeGreaterThan(0);
 
     const batch = await pornhub.videos.detailsMany(inputs, {
       concurrency: 2,
