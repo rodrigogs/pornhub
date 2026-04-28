@@ -1,0 +1,16 @@
+export type {
+  DetailsInput,
+  DetailsManyOptions,
+  Pagination,
+  PornhubVideoOrdering,
+  SearchOptions,
+  VideoDetailsBatchFailure,
+  VideoDetailsBatchItem,
+  VideoDetailsBatchResult,
+  VideoDetailsBatchSuccess,
+  VideoDetailsResult,
+  VideoFiles,
+  VideoListResult,
+  VideoProfile,
+  VideoSummary,
+} from './videos.js';
