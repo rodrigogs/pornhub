@@ -1,11 +1,19 @@
 {
   "name": "pornhub",
-  "description": "pornhub.com api implementation.",
+  "description": "pornhub API library",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/cjs/index.cjs",
   "types": "dist/types/index.d.ts",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rodrigogs/pornhub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rodrigogs/pornhub/issues"
+  },
+  "homepage": "https://github.com/rodrigogs/pornhub#readme",
   "keywords": [
     "crawler",
     "porn",
@@ -23,7 +31,8 @@
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "coverage": "vitest run --project unit --coverage"
+    "coverage": "vitest run --project unit --coverage",
+    "test:junit": "vitest run --reporter=default --reporter=junit --outputFile=test-report.junit.xml"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
@@ -50,6 +59,7 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ]
 }
