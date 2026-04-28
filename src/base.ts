@@ -49,8 +49,7 @@ export const shouldRetry = (error: unknown): error is RetryableError => {
 
   return (
     retryable.name === 'TimeoutError' ||
-    (retryable.code !== undefined &&
-      RETRYABLE_ERROR_CODES.has(retryable.code))
+    (retryable.code !== undefined && RETRYABLE_ERROR_CODES.has(retryable.code))
   );
 };
 

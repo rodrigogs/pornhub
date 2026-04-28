@@ -97,7 +97,10 @@ const assertVideoUrl = (url: string): void => {
     throw new Error('Invalid url');
   }
 
-  if (parsed.protocol !== 'https:' || !ALLOWED_VIDEO_HOST.test(parsed.hostname)) {
+  if (
+    parsed.protocol !== 'https:' ||
+    !ALLOWED_VIDEO_HOST.test(parsed.hostname)
+  ) {
     throw new Error('Invalid url');
   }
 };
@@ -141,7 +144,9 @@ const parseDurationSeconds = (value: string | number): number => {
   }
 
   if (/^\d{1,2}:\d{2}(?::\d{2})?$/.test(normalized)) {
-    const parts = normalized.split(':').map((part) => Number.parseInt(part, 10));
+    const parts = normalized
+      .split(':')
+      .map((part) => Number.parseInt(part, 10));
 
     return parts.reduce((total, part) => total * 60 + part, 0);
   }
@@ -253,7 +258,9 @@ const parseJsonLdVideoObject = ($: CheerioAPI): JsonRecord => {
 };
 
 const parsePages = ($: CheerioAPI): number[] => {
-  return $('li.page_number a, li.page_number span, .pagination a, .pagination span')
+  return $(
+    'li.page_number a, li.page_number span, .pagination a, .pagination span',
+  )
     .map((_, element) => Number.parseInt(normalizeText($(element).text()), 10))
     .get()
     .filter((value): value is number => Number.isFinite(value));
@@ -295,7 +302,9 @@ const parseThumbnailUrl = ($video: Cheerio<Element>): string => {
 const parseVideo = ($: CheerioAPI, element: Element): VideoSummary | null => {
   const $video = $(element);
   const link = $video
-    .find('a.linkVideoThumb[href*="view_video.php?viewkey="], .title a[href*="view_video.php?viewkey="], .vidTitleWrapper a[href*="view_video.php?viewkey="]')
+    .find(
+      'a.linkVideoThumb[href*="view_video.php?viewkey="], .title a[href*="view_video.php?viewkey="], .vidTitleWrapper a[href*="view_video.php?viewkey="]',
+    )
     .first();
   const path = link.attr('href');
 
@@ -304,10 +313,13 @@ const parseVideo = ($: CheerioAPI, element: Element): VideoSummary | null => {
   }
 
   const profileLink = $video
-    .find('.usernameBadgesWrapper a[href], .usernameWrap a[href], .videoUploaderBlock a[href]')
+    .find(
+      '.usernameBadgesWrapper a[href], .usernameWrap a[href], .videoUploaderBlock a[href]',
+    )
     .first();
   const title =
-    normalizeText(link.attr('title')) || normalizeText($video.find('.title').first().text());
+    normalizeText(link.attr('title')) ||
+    normalizeText($video.find('.title').first().text());
   const duration =
     normalizeText($video.find('var.duration, .duration').first().text()) || '';
   const viewText =
@@ -317,7 +329,8 @@ const parseVideo = ($: CheerioAPI, element: Element): VideoSummary | null => {
   return {
     url: base.resolveUrl(path),
     videoId:
-      normalizeText($video.attr('data-video-vkey')) || parseVideoId(base.resolveUrl(path)),
+      normalizeText($video.attr('data-video-vkey')) ||
+      parseVideoId(base.resolveUrl(path)),
     title,
     duration,
     durationSeconds: parseDurationSeconds(duration),
@@ -441,7 +454,11 @@ const hottest = async ({
 } = {}): Promise<VideoListResult> => {
   assertPage(page);
 
-  return createOrderedListLoader('ht', (targetPage) => hottest({ page: targetPage }), page);
+  return createOrderedListLoader(
+    'ht',
+    (targetPage) => hottest({ page: targetPage }),
+    page,
+  );
 };
 
 const mostViewed = async ({
@@ -516,7 +533,9 @@ const search = async ({
 };
 
 const parseUploadDate = (html: string): string => {
-  const match = html.match(/['"]video_date_published['"]\s*:\s*['"](\d{8})['"]/i);
+  const match = html.match(
+    /['"]video_date_published['"]\s*:\s*['"](\d{8})['"]/i,
+  );
 
   if (!match) {
     return '';
@@ -553,15 +572,24 @@ const parseMediaDefinitions = (flashvars: Flashvars): MediaDefinition[] => {
 };
 
 const parseMediaQuality = (definition: MediaDefinition): number => {
-  if (typeof definition.height === 'number' && Number.isFinite(definition.height)) {
+  if (
+    typeof definition.height === 'number' &&
+    Number.isFinite(definition.height)
+  ) {
     return definition.height;
   }
 
-  if (typeof definition.width === 'number' && Number.isFinite(definition.width)) {
+  if (
+    typeof definition.width === 'number' &&
+    Number.isFinite(definition.width)
+  ) {
     return definition.width;
   }
 
-  if (typeof definition.quality === 'number' && Number.isFinite(definition.quality)) {
+  if (
+    typeof definition.quality === 'number' &&
+    Number.isFinite(definition.quality)
+  ) {
     return definition.quality;
   }
 
@@ -573,7 +601,10 @@ const parseMediaQuality = (definition: MediaDefinition): number => {
   return 0;
 };
 
-const extractFiles = (flashvars: Flashvars, fallbackImage: string): VideoFiles => {
+const extractFiles = (
+  flashvars: Flashvars,
+  fallbackImage: string,
+): VideoFiles => {
   const definitions = parseMediaDefinitions(flashvars)
     .map((definition) => ({
       ...definition,
@@ -586,7 +617,8 @@ const extractFiles = (flashvars: Flashvars, fallbackImage: string): VideoFiles =
   const hls = definitions
     .filter((definition) => definition.format === 'hls')
     .sort((left, right) => parseMediaQuality(left) - parseMediaQuality(right));
-  const bestHls = hls.find((definition) => definition.defaultQuality) || hls.at(-1);
+  const bestHls =
+    hls.find((definition) => definition.defaultQuality) || hls.at(-1);
   const thumbs = Array.isArray(flashvars.thumbs?.spritePatterns)
     ? flashvars.thumbs?.spritePatterns.map((value) => decodeEscapedValue(value))
     : [];
@@ -614,9 +646,14 @@ const parseTaxonomy = ($: CheerioAPI, selector: string): string[] => {
   );
 };
 
-const parseRating = ($: CheerioAPI, html: string): { voteCount: number; ratingPercent: number } => {
+const parseRating = (
+  $: CheerioAPI,
+  html: string,
+): { voteCount: number; ratingPercent: number } => {
   const up = parseNumberWithSuffix(normalizeText($('.votesUp').first().text()));
-  const down = parseNumberWithSuffix(normalizeText($('.votesDown').first().text()));
+  const down = parseNumberWithSuffix(
+    normalizeText($('.votesDown').first().text()),
+  );
   const voteCount = up + down;
 
   if (voteCount > 0) {
@@ -634,7 +671,11 @@ const parseRating = ($: CheerioAPI, html: string): { voteCount: number; ratingPe
   };
 };
 
-const parseWatchCount = ($: CheerioAPI, html: string, jsonLd: JsonRecord): number => {
+const parseWatchCount = (
+  $: CheerioAPI,
+  html: string,
+  jsonLd: JsonRecord,
+): number => {
   const interactionStatistic = jsonLd.interactionStatistic;
   const values = Array.isArray(interactionStatistic)
     ? interactionStatistic
@@ -669,7 +710,9 @@ const parseWatchCount = ($: CheerioAPI, html: string, jsonLd: JsonRecord): numbe
     return parseNumberWithSuffix(direct);
   }
 
-  const match = html.match(/<div class="views"><span class="count">([^<]+)<\/span>\s*Views/i);
+  const match = html.match(
+    /<div class="views"><span class="count">([^<]+)<\/span>\s*Views/i,
+  );
   return parseNumberWithSuffix(match?.[1] ?? '');
 };
 
@@ -770,7 +813,9 @@ const details = async ({ url }: DetailsInput): Promise<VideoDetailsResult> => {
   const durationSeconds =
     parseDurationSeconds(flashvars.video_duration ?? '') ||
     parseDurationSeconds(readMeta($, 'video:duration')) ||
-    parseDurationSeconds(typeof jsonLd.duration === 'string' ? jsonLd.duration : '');
+    parseDurationSeconds(
+      typeof jsonLd.duration === 'string' ? jsonLd.duration : '',
+    );
   const rating = parseRating($, html);
   const mediaDefinitions = parseMediaDefinitions(flashvars);
   const mediaByQuality = mediaDefinitions.sort(
@@ -778,7 +823,8 @@ const details = async ({ url }: DetailsInput): Promise<VideoDetailsResult> => {
   );
   const biggestMedia = mediaByQuality.at(-1);
   const contentUrl =
-    (typeof jsonLd.contentUrl === 'string' && normalizeText(jsonLd.contentUrl)) ||
+    (typeof jsonLd.contentUrl === 'string' &&
+      normalizeText(jsonLd.contentUrl)) ||
     files.high ||
     files.HLS;
 
@@ -798,10 +844,14 @@ const details = async ({ url }: DetailsInput): Promise<VideoDetailsResult> => {
       files.thumbSlide,
       files.thumbSlideBig,
       ...(Array.isArray(flashvars.thumbs?.spritePatterns)
-        ? flashvars.thumbs.spritePatterns.map((value) => decodeEscapedValue(value))
+        ? flashvars.thumbs.spritePatterns.map((value) =>
+            decodeEscapedValue(value),
+          )
         : []),
       ...(Array.isArray(jsonLd.thumbnailUrl)
-        ? jsonLd.thumbnailUrl.filter((value): value is string => typeof value === 'string')
+        ? jsonLd.thumbnailUrl.filter(
+            (value): value is string => typeof value === 'string',
+          )
         : typeof jsonLd.thumbnailUrl === 'string'
           ? [jsonLd.thumbnailUrl]
           : []),
@@ -813,16 +863,24 @@ const details = async ({ url }: DetailsInput): Promise<VideoDetailsResult> => {
     videoWidth:
       typeof biggestMedia?.width === 'number' ? String(biggestMedia.width) : '',
     videoHeight:
-      typeof biggestMedia?.height === 'number' ? String(biggestMedia.height) : '',
+      typeof biggestMedia?.height === 'number'
+        ? String(biggestMedia.height)
+        : '',
     uploadDate:
       parseUploadDate(html) ||
-      (typeof jsonLd.uploadDate === 'string' ? normalizeText(jsonLd.uploadDate) : ''),
+      (typeof jsonLd.uploadDate === 'string'
+        ? normalizeText(jsonLd.uploadDate)
+        : ''),
     description:
-      (typeof jsonLd.description === 'string' && normalizeText(jsonLd.description)) ||
+      (typeof jsonLd.description === 'string' &&
+        normalizeText(jsonLd.description)) ||
       readMeta($, 'og:description'),
     contentUrl,
     tags: parseTaxonomy($, '.video-detailed-info .tagsWrapper a.item'),
-    categories: parseTaxonomy($, '.video-detailed-info .categoriesWrapper a.item'),
+    categories: parseTaxonomy(
+      $,
+      '.video-detailed-info .categoriesWrapper a.item',
+    ),
     files,
   };
 };

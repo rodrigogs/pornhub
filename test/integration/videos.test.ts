@@ -51,9 +51,9 @@ describe('Pornhub live integration', () => {
     expect(detail.title.length).toBeGreaterThan(0);
     expect(detail.durationSeconds).toBeGreaterThan(0);
     expect(detail.thumbnailUrls.length).toBeGreaterThan(0);
-    expect(
-      detail.files.high.length > 0 || detail.files.HLS.length > 0,
-    ).toBe(true);
+    expect(detail.files.high.length > 0 || detail.files.HLS.length > 0).toBe(
+      true,
+    );
     expect(detail.tags.length).toBeGreaterThan(0);
     expect(detail.categories.length).toBeGreaterThan(0);
 
