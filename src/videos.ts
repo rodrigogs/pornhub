@@ -910,10 +910,6 @@ const detailsMany = async (
       const index = cursor;
       cursor += 1;
 
-      if (index >= normalizedInputs.length) {
-        return;
-      }
-
       const input = normalizedInputs[index];
       await startGate();
 

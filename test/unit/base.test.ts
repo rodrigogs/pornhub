@@ -1,0 +1,170 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import base, {
+  BASE_URL,
+  createRequest,
+  delay,
+  resolveUrl,
+  shouldRetry,
+} from '../../src/base.js';
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.resetModules();
+  vi.restoreAllMocks();
+});
+
+describe('base helpers', () => {
+  it('exposes the base url and resolves relative paths', () => {
+    expect(BASE_URL).toBe('https://www.pornhub.com');
+    expect(resolveUrl()).toBe('');
+    expect(resolveUrl('/video')).toBe('https://www.pornhub.com/video');
+    expect(resolveUrl('https://www.pornhub.org/video')).toBe(
+      'https://www.pornhub.org/video',
+    );
+    expect(base).toMatchObject({
+      BASE_URL,
+      createRequest,
+      delay,
+      resolveUrl,
+    });
+  });
+
+  it('waits for the requested delay', async () => {
+    vi.useFakeTimers();
+
+    const pending = delay(50);
+    let settled = false;
+    pending.then(() => {
+      settled = true;
+    });
+
+    await vi.advanceTimersByTimeAsync(49);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(pending).resolves.toBeUndefined();
+    expect(settled).toBe(true);
+  });
+
+  it('detects retryable errors', () => {
+    expect(shouldRetry('timeout')).toBe(false);
+    expect(shouldRetry(new Error('boom'))).toBe(false);
+    expect(
+      shouldRetry(
+        Object.assign(new Error('timeout'), { name: 'TimeoutError' }),
+      ),
+    ).toBe(true);
+    expect(
+      shouldRetry(Object.assign(new Error('reset'), { code: 'ECONNRESET' })),
+    ).toBe(true);
+    expect(
+      shouldRetry(Object.assign(new Error('bad gateway'), { code: 'EOTHER' })),
+    ).toBe(false);
+  });
+
+  it('builds request options and coerces non-string bodies', async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: { ok: true },
+      statusCode: 201,
+      url: 'https://www.pornhub.com/video',
+    });
+    const request = createRequest({
+      transport,
+      headers: {
+        'x-test': '1',
+      },
+    });
+
+    await expect(request.get('/video')).resolves.toEqual({
+      data: '[object Object]',
+      statusCode: 201,
+      url: 'https://www.pornhub.com/video',
+    });
+
+    expect(transport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://www.pornhub.com/video',
+        http2: false,
+        responseType: 'text',
+        throwHttpErrors: true,
+        retry: {
+          limit: 0,
+        },
+        timeout: {
+          request: 20_000,
+        },
+        headers: expect.objectContaining({
+          'x-test': '1',
+          referer: 'https://www.pornhub.com/',
+        }),
+      }),
+    );
+  });
+
+  it('retries retryable transport errors and then succeeds', async () => {
+    const transport = vi
+      .fn()
+      .mockRejectedValueOnce(
+        Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' }),
+      )
+      .mockResolvedValueOnce({
+        body: 'ok',
+        statusCode: 200,
+        url: 'https://www.pornhub.com/video',
+      });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const request = createRequest({ transport, sleep });
+
+    await expect(request.get('/video')).resolves.toEqual({
+      data: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+    expect(transport).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(750);
+  });
+
+  it('does not retry non-retryable errors', async () => {
+    const error = new Error('boom');
+    const transport = vi.fn().mockRejectedValue(error);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const request = createRequest({ transport, sleep });
+
+    await expect(request.get('/video')).rejects.toThrow('boom');
+    expect(transport).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('stops retrying after the final attempt', async () => {
+    const error = Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' });
+    const transport = vi.fn().mockRejectedValue(error);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const request = createRequest({ transport, sleep });
+
+    await expect(request.get('/video')).rejects.toThrow('timeout');
+    expect(transport).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenNthCalledWith(1, 750);
+    expect(sleep).toHaveBeenNthCalledWith(2, 1500);
+  });
+
+  it('uses the default got-scraping transport when none is provided', async () => {
+    const gotScraping = vi.fn().mockResolvedValue({
+      body: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+
+    vi.doMock('got-scraping', () => ({ gotScraping }));
+
+    const { createRequest: createDefaultRequest } = await import(
+      '../../src/base.js'
+    );
+
+    await expect(createDefaultRequest().get('/video')).resolves.toEqual({
+      data: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+    expect(gotScraping).toHaveBeenCalledTimes(1);
+  });
+});
