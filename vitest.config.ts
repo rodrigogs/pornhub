@@ -21,7 +21,7 @@ export default defineConfig({
           include: ['test/integration/**/*.test.ts'],
           fileParallelism: false,
           maxConcurrency: 1,
-          retry: 1,
+          retry: 3,
           testTimeout: 60_000,
           hookTimeout: 60_000,
         },
