@@ -1,23 +1,27 @@
 # pornhub
 
-A Node.js library for the Pornhub website.
+[![CI](https://github.com/rodrigogs/pornhub/actions/workflows/node.js.yml/badge.svg)](https://github.com/rodrigogs/pornhub/actions/workflows/node.js.yml)
+[![codecov](https://codecov.io/gh/rodrigogs/pornhub/graph/badge.svg)](https://codecov.io/gh/rodrigogs/pornhub)
+[![CodeQL](https://github.com/rodrigogs/pornhub/actions/workflows/codeql.yml/badge.svg)](https://github.com/rodrigogs/pornhub/actions/workflows/codeql.yml)
+
+A [Node.js](https://nodejs.org) library for the [pornhub.com](https://www.pornhub.com) API.
 
 Requires Node.js 20+.
 
 ## Installation
 
 ```bash
-npm install pornhub
+npm install @rodrigogs/pornhub
 ```
 
 ## Usage
 
 ```javascript
-import pornhub from 'pornhub';
+import pornhub from '@rodrigogs/pornhub';
 ```
 
 ```javascript
-const pornhub = require('pornhub');
+const pornhub = require('@rodrigogs/pornhub');
 
 (async () => {
   const recommended = await pornhub.videos.recommended({ page: 1 });

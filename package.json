@@ -1,11 +1,11 @@
 {
-  "name": "pornhub",
-  "description": "pornhub API library",
+  "name": "@rodrigogs/pornhub",
+  "description": "pornhub.com api implementation.",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/cjs/index.cjs",
   "types": "dist/types/index.d.ts",
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "https://github.com/rodrigogs/pornhub.git"
