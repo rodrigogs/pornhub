@@ -11,17 +11,17 @@ Requires Node.js 20+.
 ## Installation
 
 ```bash
-npm install @rodrigogs/pornhub
+npm install pornhub
 ```
 
 ## Usage
 
 ```javascript
-import pornhub from '@rodrigogs/pornhub';
+import pornhub from 'pornhub';
 ```
 
 ```javascript
-const pornhub = require('@rodrigogs/pornhub');
+const pornhub = require('pornhub');
 
 (async () => {
   const recommended = await pornhub.videos.recommended({ page: 1 });
