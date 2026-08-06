@@ -17,6 +17,15 @@ export type {
   VideoSummary,
 } from './types/index.js';
 
+export type {
+  WebmastersCategory,
+  WebmastersPornstar,
+  WebmastersTag,
+  WebmastersThumb,
+  WebmastersVideo,
+  WebmastersVideoByIdResult,
+} from './types/webmasters.js';
+
 const api = pornhub;
 
 export default api;

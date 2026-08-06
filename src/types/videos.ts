@@ -68,6 +68,8 @@ export type VideoDetailsResult = {
   contentUrl: string;
   tags: string[];
   categories: string[];
+  pornstars: string[];
+  profile?: VideoProfile;
   files: VideoFiles;
 };
 

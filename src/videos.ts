@@ -12,6 +12,7 @@ import type {
   VideoDetailsResult,
   VideoFiles,
   VideoListResult,
+  VideoProfile,
   VideoSummary,
 } from './types/videos.js';
 
@@ -558,6 +559,63 @@ const extractFlashvars = (html: string): Flashvars => {
   }
 };
 
+/**
+ * Read a single-quoted field from the `window.dataLayer.push({...})` block
+ * on the watch page (e.g. `'pornstars_in_video' : 'Nadia White,Peter Green'`
+ * or `'video_uploader_name' : 'Brazzers'`). Returns '' when absent.
+ */
+const parseDataLayerField = (html: string, field: string): string => {
+  const match = html.match(
+    new RegExp(`'${field}'\\s*:\\s*'([^']*)'`),
+  );
+  return match ? decodeEscapedValue(match[1]).trim() : '';
+};
+
+/**
+ * Parse the comma-separated `pornstars_in_video` dataLayer field into a
+ * unique list of performer names. Returns [] for absent, empty or 'No'
+ * (the common amateur/verified-channel case).
+ */
+const parsePornstars = (html: string): string[] => {
+  const raw = parseDataLayerField(html, 'pornstars_in_video');
+  if (!raw || /^no$/i.test(raw)) return [];
+  return Array.from(
+    new Set(
+      raw
+        .split(',')
+        .map((name) => name.trim())
+        .filter((name) => name.length > 0 && !/^no$/i.test(name)),
+    ),
+  );
+};
+
+/**
+ * Resolve the uploader profile for a watch page: prefer the username link
+ * block, fall back to the dataLayer `video_uploader_name` field. Returns
+ * undefined when the page exposes neither.
+ */
+const parseDetailsProfile = (
+  $: CheerioAPI,
+  html: string,
+): VideoProfile | undefined => {
+  const link = $(
+    '.videoUploaderBlock .usernameWrap a[href], .videoUploaderBlock a[href]',
+  ).first();
+  const href = link.attr('href');
+  const name =
+    normalizeText(link.text()) ||
+    parseDataLayerField(html, 'video_uploader_name');
+
+  if (!name) {
+    return undefined;
+  }
+
+  return {
+    name,
+    url: href ? base.resolveUrl(href) : '',
+  };
+};
+
 const normalizeMediaUrl = (value: unknown): string => {
   return typeof value === 'string' ? decodeEscapedValue(value) : '';
 };
@@ -875,6 +933,8 @@ const details = async ({ url }: DetailsInput): Promise<VideoDetailsResult> => {
       (typeof jsonLd.description === 'string' &&
         normalizeText(jsonLd.description)) ||
       readMeta($, 'og:description'),
+    pornstars: parsePornstars(html),
+    profile: parseDetailsProfile($, html),
     contentUrl,
     tags: parseTaxonomy($, '.video-detailed-info .tagsWrapper a.item'),
     categories: parseTaxonomy(
@@ -976,6 +1036,9 @@ export const __private__ = {
   parseMediaDefinitions,
   parseNumberWithSuffix,
   parsePages,
+  parseDetailsProfile,
+  parseDataLayerField,
+  parsePornstars,
   parseRating,
   parseTaxonomy,
   parseUploadDate,

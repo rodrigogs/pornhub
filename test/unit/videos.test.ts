@@ -525,4 +525,82 @@ describe('videos helpers', () => {
     await pending;
     expect(released).toBe(true);
   });
+
+  it('parses pornstars from the dataLayer field', () => {
+    const single = `
+      <script type="text/javascript">
+        window.dataLayer.push({
+          'videodata': {
+            'pornstars_in_video' : 'Christian Clay'
+          }
+        });
+      </script>
+    `;
+    expect(__private__.parsePornstars(single)).toEqual(['Christian Clay']);
+
+    const multiple = `
+      <script>
+        'pornstars_in_video' : 'Nadia White,Peter Green,Kira Perez',
+      </script>
+    `;
+    expect(__private__.parsePornstars(multiple)).toEqual([
+      'Nadia White',
+      'Peter Green',
+      'Kira Perez',
+    ]);
+
+    expect(__private__.parsePornstars("'pornstars_in_video' : 'No'")).toEqual(
+      [],
+    );
+    expect(__private__.parsePornstars('')).toEqual([]);
+    expect(__private__.parsePornstars('<html>no field here</html>')).toEqual(
+      [],
+    );
+  });
+
+  it('parses dataLayer fields with escaped values', () => {
+    const html = `
+      <script>
+        'video_uploader_name' : 'Brazzers',
+        'categories_in_video' : 'Asian,Big Ass,Hardcore',
+      </script>
+    `;
+    expect(__private__.parseDataLayerField(html, 'video_uploader_name')).toBe(
+      'Brazzers',
+    );
+    expect(__private__.parseDataLayerField(html, 'categories_in_video')).toBe(
+      'Asian,Big Ass,Hardcore',
+    );
+    expect(__private__.parseDataLayerField(html, 'missing_field')).toBe('');
+  });
+
+  it('parses the details uploader profile from username links', () => {
+    const $ = load(`
+      <div class="videoUploaderBlock">
+        <div class="usernameWrap">
+          <a href="/channels/brazzers">Brazzers</a>
+        </div>
+      </div>
+    `);
+    expect(__private__.parseDetailsProfile($, '')).toEqual({
+      name: 'Brazzers',
+      url: 'https://www.pornhub.com/channels/brazzers',
+    });
+  });
+
+  it('falls back to the dataLayer uploader name', () => {
+    const $ = load('<div class="videoUploaderBlock"></div>');
+    const html = `
+      <script>
+        'video_uploader_name' : 'Brazzers'
+      </script>
+    `;
+    expect(__private__.parseDetailsProfile($, html)).toEqual({
+      name: 'Brazzers',
+      url: '',
+    });
+    expect(
+      __private__.parseDetailsProfile(load('<html></html>'), ''),
+    ).toBeUndefined();
+  });
 });
