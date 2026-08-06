@@ -56,6 +56,9 @@ const pornhub = require('pornhub');
 
   console.log(batch.successes);
   console.log(batch.failures);
+
+  const webmasterVideo = await pornhub.webmasters.videoById('6a636dfc70d39');
+  console.log(webmasterVideo);
 })();
 ```
 
@@ -128,6 +131,11 @@ Returns:
   contentUrl: 'https://...',
   tags: ['...'],
   categories: ['...'],
+  pornstars: ['...'],
+  profile: {
+    name: '...',
+    url: 'https://www.pornhub.com/model/...'
+  },
   files: {
     low: 'https://...',
     high: 'https://...',
@@ -161,6 +169,38 @@ Returns:
   ],
   successes: [{ /* details */ }],
   failures: [{ input: { url: '...' }, ok: false, error: new Error('...') }]
+}
+```
+
+### `webmasters.videoById(id)`
+
+Fetches structured metadata for a single video from the Pornhub webmasters API (`https://www.pornhub.com/webmasters/`). Unlike the watch page scrape, this endpoint returns JSON directly and is more tolerant of request bursts, making it a resilient fallback when page scraping fails (throttle, age-gate, temporary 404s).
+
+```javascript
+const video = await pornhub.webmasters.videoById('6a636dfc70d39');
+console.log(video);
+```
+
+Returns `null` when the id is invalid or the endpoint returns no video data:
+
+```javascript
+{
+  duration: '14:33',
+  views: 960000,
+  video_id: '6a636dfc70d39',
+  rating: 97.81,
+  ratings: 640,
+  title: '...',
+  url: 'https://www.pornhub.com/view_video.php?viewkey=6a636dfc70d39',
+  default_thumb: 'https://...',
+  thumb: 'https://...',
+  publish_date: '2026-03-27',
+  thumbs: [{ size: 'small', width: '160', height: '90', src: 'https://...' }],
+  tags: [{ tag_name: '...' }],
+  pornstars: [{ pornstar_name: '...', pornstar_link: 'https://...' }],
+  categories: [{ category: '...' }],
+  segment: '...',
+  description: '...'
 }
 ```
 
