@@ -565,9 +565,7 @@ const extractFlashvars = (html: string): Flashvars => {
  * or `'video_uploader_name' : 'Brazzers'`). Returns '' when absent.
  */
 const parseDataLayerField = (html: string, field: string): string => {
-  const match = html.match(
-    new RegExp(`'${field}'\\s*:\\s*'([^']*)'`),
-  );
+  const match = html.match(new RegExp(`'${field}'\\s*:\\s*'([^']*)'`));
   return match ? decodeEscapedValue(match[1]).trim() : '';
 };
 

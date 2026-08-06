@@ -63,7 +63,9 @@ const importWebmasters = async (replies: Array<Error | string>) => {
 
 describe('webmasters', () => {
   it('parses a video_by_id response', async () => {
-    const { webmasters } = await importWebmasters([JSON.stringify(webmastersPayload)]);
+    const { webmasters } = await importWebmasters([
+      JSON.stringify(webmastersPayload),
+    ]);
     const result = await webmasters.videoById('6a636dfc70d39');
 
     expect(result?.title).toBe('BRAZZERS scene');
@@ -80,7 +82,9 @@ describe('webmasters', () => {
   });
 
   it('returns null for a response without a video object', async () => {
-    const { webmasters } = await importWebmasters([JSON.stringify({ code: '2001' })]);
+    const { webmasters } = await importWebmasters([
+      JSON.stringify({ code: '2001' }),
+    ]);
     const result = await webmasters.videoById('6a636dfc70d39');
     expect(result).toBeNull();
   });
