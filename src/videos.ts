@@ -5,6 +5,7 @@ import type {
   DetailsInput,
   DetailsManyOptions,
   PornhubVideoOrdering,
+  PornstarOptions,
   SearchOptions,
   VideoDetailsBatchFailure,
   VideoDetailsBatchItem,
@@ -378,12 +379,29 @@ const loadListingPage = async (
   page: number,
   candidates: string[],
   loadPage: (targetPage: number) => Promise<VideoListResult>,
+  validate?: ($: CheerioAPI) => boolean,
 ): Promise<VideoListResult> => {
   let lastError: Error | undefined;
 
   for (const candidate of Array.from(new Set(candidates))) {
     try {
       const response = await request.get(candidate);
+      const $ = load(response.data);
+      // A page-level guard (e.g. pornstar pages redirect unknown slugs to a
+      // generic directory whose listing would parse as irrelevant videos).
+      // When the guard fails, return an empty listing so callers fall back
+      // to a generic search instead of surfacing unrelated results.
+      if (validate && !validate($)) {
+        return {
+          videos: [],
+          pagination: { page, pages: [page] },
+          refresh: () => loadPage(page),
+          hasNext: () => false,
+          next: () => loadPage(page),
+          hasPrevious: () => false,
+          previous: () => loadPage(page),
+        };
+      }
       const result = buildListResult(page, response.data, loadPage);
 
       if (result.videos.length > 0) {
@@ -1006,12 +1024,52 @@ const detailsMany = async (
   };
 };
 
+const slugifyPornstarName = (name: string): string => {
+  const normalized = normalizeText(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return normalized || 'unknown';
+};
+
+/**
+ * True when the page is really a pornstar's video listing. Pornhub
+ * redirects unknown `/pornstar/<slug>` paths to the general `/pornstars`
+ * directory, whose own listing would otherwise parse as 4-30 irrelevant
+ * videos. A valid actor page carries `<title><Name> Porn Videos | Pornhub.com</title>`.
+ */
+const isPornstarPage = ($: CheerioAPI): boolean => {
+  const title = $('title').first().text() || '';
+  return title.toLowerCase().includes('porn videos');
+};
+
+const pornstar = async ({
+  page = 1,
+  name,
+}: PornstarOptions = {}): Promise<VideoListResult> => {
+  assertPage(page);
+
+  const slug = slugifyPornstarName(name ?? '');
+
+  return loadListingPage(
+    page,
+    [buildPagedPath(`/pornstar/${slug}`, page)],
+    (targetPage) =>
+      pornstar({
+        page: targetPage,
+        name,
+      }),
+    isPornstarPage,
+  );
+};
+
 const videos = {
   details,
   detailsMany,
   hottest,
   mostViewed,
   newest,
+  pornstar,
   recommended,
   search,
   topRated,

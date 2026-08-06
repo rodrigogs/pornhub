@@ -110,3 +110,8 @@ export type SearchOptions = {
   ordering?: PornhubVideoOrdering;
   o?: PornhubVideoOrdering;
 };
+
+export type PornstarOptions = {
+  page?: number;
+  name?: string;
+};

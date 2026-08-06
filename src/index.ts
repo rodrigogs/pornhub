@@ -5,6 +5,7 @@ export type {
   DetailsManyOptions,
   Pagination,
   PornhubVideoOrdering,
+  PornstarOptions,
   SearchOptions,
   VideoDetailsBatchFailure,
   VideoDetailsBatchItem,
