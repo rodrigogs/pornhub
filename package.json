@@ -1,7 +1,7 @@
 {
   "name": "pornhub",
   "description": "pornhub.com api implementation.",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "type": "module",
   "main": "dist/cjs/index.cjs",
   "types": "dist/types/index.d.ts",
