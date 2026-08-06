@@ -113,7 +113,7 @@ describe('base helpers', () => {
         url: 'https://www.pornhub.com/video',
       });
     const sleep = vi.fn().mockResolvedValue(undefined);
-    const request = createRequest({ transport, sleep });
+    const request = createRequest({ transport, sleep, random: () => 1 });
 
     await expect(request.get('/video')).resolves.toEqual({
       data: 'ok',
@@ -139,12 +139,23 @@ describe('base helpers', () => {
     const error = Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' });
     const transport = vi.fn().mockRejectedValue(error);
     const sleep = vi.fn().mockResolvedValue(undefined);
-    const request = createRequest({ transport, sleep });
+    const request = createRequest({ transport, sleep, random: () => 1 });
 
     await expect(request.get('/video')).rejects.toThrow('timeout');
     expect(transport).toHaveBeenCalledTimes(3);
     expect(sleep).toHaveBeenNthCalledWith(1, 750);
     expect(sleep).toHaveBeenNthCalledWith(2, 1500);
+  });
+
+  it('applies full jitter to the exponential backoff', async () => {
+    const error = Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' });
+    const transport = vi.fn().mockRejectedValue(error);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const request = createRequest({ transport, sleep, random: () => 0.5 });
+
+    await expect(request.get('/video')).rejects.toThrow('timeout');
+    expect(sleep).toHaveBeenNthCalledWith(1, 375);
+    expect(sleep).toHaveBeenNthCalledWith(2, 750);
   });
 
   it('uses the default got-scraping transport when none is provided', async () => {

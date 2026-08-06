@@ -53,6 +53,21 @@ export const shouldRetry = (error: unknown): error is RetryableError => {
   );
 };
 
+const RETRY_BASE_DELAY_MS = 750;
+
+/**
+ * Exponential backoff with full jitter (AWS recommended): the delay for a
+ * given attempt is a uniform random value in [0, base * 2^(attempt-1)).
+ * Jitter avoids thundering-herd retry storms against rate limiters.
+ */
+export const computeRetryDelay = (
+  attempt: number,
+  random: () => number = Math.random,
+): number => {
+  const base = RETRY_BASE_DELAY_MS * 2 ** Math.max(0, attempt - 1);
+  return Math.round(base * random());
+};
+
 export const createRequest = (options: RequestOptions = {}) => ({
   async get(path: string): Promise<RequestResponse> {
     const transport = options.transport ?? gotScraping;
@@ -91,7 +106,7 @@ export const createRequest = (options: RequestOptions = {}) => ({
           throw error;
         }
 
-        await sleep(attempt * 750);
+        await sleep(computeRetryDelay(attempt, options.random));
         attempt += 1;
       }
     }
@@ -100,6 +115,7 @@ export const createRequest = (options: RequestOptions = {}) => ({
 
 export default {
   BASE_URL,
+  computeRetryDelay,
   createRequest,
   delay,
   resolveUrl,

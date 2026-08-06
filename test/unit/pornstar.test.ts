@@ -141,23 +141,84 @@ describe('pornstar listing', () => {
     // The guard sees the generic directory title and must yield NO videos —
     // callers (the addon) fall back to a generic search instead.
     mockRoutes({
-      '/pornstar/lesbian': [genericDirectoryHtml],
+      '/pornstar/lesbian': [
+        genericDirectoryHtml,
+        genericDirectoryHtml,
+        genericDirectoryHtml,
+        genericDirectoryHtml,
+        genericDirectoryHtml,
+      ],
     });
 
     const api = await importApi();
     const result = await api.videos.pornstar({ name: 'lesbian' });
 
     expect(result.videos).toHaveLength(0);
+    expect(result.hasNext()).toBe(false);
+    expect(result.hasPrevious()).toBe(false);
+    await expect(result.refresh()).resolves.toMatchObject({
+      videos: [],
+      pagination: { page: 1 },
+    });
+    await expect(result.next()).resolves.toMatchObject({
+      videos: [],
+      pagination: { page: 1 },
+    });
+    await expect(result.previous()).resolves.toMatchObject({
+      videos: [],
+      pagination: { page: 1 },
+    });
+  });
+
+  it('navigates to the next page through the pornstar listing helpers', async () => {
+    mockRoutes({
+      '/pornstar/michael-fly': [
+        pornstarListHtml({ viewkey: 'abc123def456', title: 'Page 1 scene' }),
+      ],
+      '/pornstar/michael-fly?page=2': [
+        pornstarListHtml({ viewkey: 'def456ghi789', title: 'Page 2 scene' }),
+      ],
+    });
+
+    const api = await importApi();
+    const result = await api.videos.pornstar({ name: 'Michael Fly', page: 1 });
+
+    expect(result.videos).toHaveLength(1);
+    expect(result.videos[0].videoId).toBe('abc123def456');
+
+    // next() re-invokes pornstar() recursively for page 2.
+    const secondPage = await result.next();
+
+    expect(secondPage.videos).toHaveLength(1);
+    expect(secondPage.videos[0].videoId).toBe('def456ghi789');
   });
 
   it('handles a missing name gracefully (unknown slug, empty listing)', async () => {
     mockRoutes({
-      '/pornstar/unknown': [genericDirectoryHtml],
+      '/pornstar/unknown': [
+        genericDirectoryHtml,
+        genericDirectoryHtml,
+      ],
     });
 
     const api = await importApi();
     const result = await api.videos.pornstar({ name: '' });
+    const noName = await api.videos.pornstar({});
 
     expect(result.videos).toHaveLength(0);
+    expect(noName.videos).toHaveLength(0);
+    expect(noName.pagination.page).toBe(1);
+  });
+
+  it('rejects pages without a recognizable title', async () => {
+    mockRoutes({
+      '/pornstar/blank-page': ['<html><body></body></html>'],
+    });
+
+    const api = await importApi();
+    const result = await api.videos.pornstar({ name: 'Blank Page' });
+
+    expect(result.videos).toHaveLength(0);
+    expect(result.hasNext()).toBe(false);
   });
 });

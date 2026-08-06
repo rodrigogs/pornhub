@@ -22,6 +22,7 @@ export type RequestOptions = {
   headers?: Record<string, string>;
   sleep?: (milliseconds: number) => Promise<void>;
   transport?: Transport;
+  random?: () => number;
 };
 
 export type RequestResponse = {

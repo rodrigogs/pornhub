@@ -59,6 +59,12 @@ const pornhub = require('pornhub');
 
   const webmasterVideo = await pornhub.webmasters.videoById('6a636dfc70d39');
   console.log(webmasterVideo);
+
+  const byActor = await pornhub.videos.pornstar({
+    name: 'Abigaile Johnson',
+    page: 1,
+  });
+  console.log(byActor.videos);
 })();
 ```
 
@@ -105,8 +111,24 @@ Available methods:
 - `videos.topRated({ page })`
 - `videos.newest({ page })`
 - `videos.search({ page, search, k, ordering, o })`
+- `videos.pornstar({ page, name })`
 
 `search()` accepts `search` or `k` as query aliases, and `ordering` or `o` for Pornhub ordering codes such as `mr`, `mv`, `tr`, `ht`, and `cm`.
+
+### `videos.pornstar({ page, name })`
+
+Lists only the videos of a specific actor. The name is slugified and loaded from the dedicated `/pornstar/<slug>` page, which avoids the noisy results that a title-based `/video/search` match returns for actor names.
+
+```javascript
+const byActor = await pornhub.videos.pornstar({
+  page: 1,
+  name: 'Abigaile Johnson',
+});
+
+console.log(byActor.videos);
+```
+
+Returns the same `VideoListResult` shape as the other list methods. When the slug does not exist (Pornhub redirects unknown names to the generic `/pornstars` directory), the result is an empty `videos: []` listing instead of unrelated videos.
 
 ### `videos.details({ url })`
 
