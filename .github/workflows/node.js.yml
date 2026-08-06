@@ -63,7 +63,7 @@ jobs:
       - run: npm run test:integration
 
   coverage:
-    name: coverage (Node 22.x)
+    name: coverage + test results (Node 22.x)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: quality
@@ -102,23 +102,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  test-results:
-    name: test results (Node 22.x)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: quality
-
-    steps:
-      - uses: actions/checkout@v6.0.2
-
-      - name: Use Node.js 22.x
-        uses: actions/setup-node@v6.4.0
-        with:
-          node-version: 22.x
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - run: npm ci
       - run: npm run test:junit
 
       - name: Upload test results to Codecov
