@@ -195,10 +195,7 @@ describe('pornstar listing', () => {
 
   it('handles a missing name gracefully (unknown slug, empty listing)', async () => {
     mockRoutes({
-      '/pornstar/unknown': [
-        genericDirectoryHtml,
-        genericDirectoryHtml,
-      ],
+      '/pornstar/unknown': [genericDirectoryHtml, genericDirectoryHtml],
     });
 
     const api = await importApi();
