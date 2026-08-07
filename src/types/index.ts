@@ -1,4 +1,5 @@
 export type {
+  ChannelOptions,
   DetailsInput,
   DetailsManyOptions,
   Pagination,

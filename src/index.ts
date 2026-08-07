@@ -1,6 +1,7 @@
 import pornhub from './pornhub.js';
 
 export type {
+  ChannelOptions,
   DetailsInput,
   DetailsManyOptions,
   Pagination,

@@ -2,6 +2,7 @@ import { type Cheerio, type CheerioAPI, load } from 'cheerio';
 import type { Element } from 'domhandler';
 import base from './base.js';
 import type {
+  ChannelOptions,
   DetailsInput,
   DetailsManyOptions,
   PornhubVideoOrdering,
@@ -18,6 +19,7 @@ import type {
 } from './types/videos.js';
 
 export type {
+  ChannelOptions,
   DetailsInput,
   DetailsManyOptions,
   Pagination,
@@ -375,6 +377,19 @@ const buildListResult = (
   };
 };
 
+const buildEmptyListing = (
+  page: number,
+  loadPage: (targetPage: number) => Promise<VideoListResult>,
+): VideoListResult => ({
+  videos: [],
+  pagination: { page, pages: [page] },
+  refresh: () => loadPage(page),
+  hasNext: () => false,
+  next: () => loadPage(page),
+  hasPrevious: () => false,
+  previous: () => loadPage(page),
+});
+
 const loadListingPage = async (
   page: number,
   candidates: string[],
@@ -392,15 +407,7 @@ const loadListingPage = async (
       // When the guard fails, return an empty listing so callers fall back
       // to a generic search instead of surfacing unrelated results.
       if (validate && !validate($)) {
-        return {
-          videos: [],
-          pagination: { page, pages: [page] },
-          refresh: () => loadPage(page),
-          hasNext: () => false,
-          next: () => loadPage(page),
-          hasPrevious: () => false,
-          previous: () => loadPage(page),
-        };
+        return buildEmptyListing(page, loadPage);
       }
       const result = buildListResult(page, response.data, loadPage);
 
@@ -1063,7 +1070,55 @@ const pornstar = async ({
   );
 };
 
+/**
+ * True when the page is really a channel's video listing. Pornhub returns
+ * a 404 "Page Not Found" for unknown `/channels/<slug>` paths (unlike
+ * pornstar pages, which redirect to the generic directory). A valid channel
+ * page carries `<title><Name>'s Channel - Pornhub.com</title>`.
+ */
+const isChannelPage = ($: CheerioAPI): boolean => {
+  const title = $('title').first().text() || '';
+  return title.toLowerCase().includes('channel - pornhub.com');
+};
+
+const channels = async ({
+  page = 1,
+  name,
+}: ChannelOptions = {}): Promise<VideoListResult> => {
+  assertPage(page);
+
+  const slug = slugifyPornstarName(name ?? '');
+
+  try {
+    return await loadListingPage(
+      page,
+      [buildPagedPath(`/channels/${slug}`, page)],
+      (targetPage) =>
+        channels({
+          page: targetPage,
+          name,
+        }),
+      isChannelPage,
+    );
+  } catch (error) {
+    // Unknown channel slugs return a real HTTP 404 (unlike pornstar pages,
+    // which redirect). Surface an empty listing instead of an exception so
+    // callers can fall back gracefully.
+    const statusCode = (error as { response?: { statusCode?: number } })
+      .response?.statusCode;
+
+    if (statusCode === 404) {
+      return buildEmptyListing(page, (targetPage) =>
+        channels({ page: targetPage, name }),
+      );
+    }
+
+    throw error;
+  }
+};
+
 const videos = {
+  channels,
   details,
   detailsMany,
   hottest,
@@ -1085,6 +1140,8 @@ export const __private__ = {
   extractFiles,
   extractFlashvars,
   formatDuration,
+  isChannelPage,
+  isPornstarPage,
   normalizeDetailsManyOptions,
   normalizeText,
   parseDurationSeconds,

@@ -65,6 +65,12 @@ const pornhub = require('pornhub');
     page: 1,
   });
   console.log(byActor.videos);
+
+  const byChannel = await pornhub.videos.channels({
+    name: 'Brazzers',
+    page: 1,
+  });
+  console.log(byChannel.videos);
 })();
 ```
 
@@ -112,6 +118,7 @@ Available methods:
 - `videos.newest({ page })`
 - `videos.search({ page, search, k, ordering, o })`
 - `videos.pornstar({ page, name })`
+- `videos.channels({ page, name })`
 
 `search()` accepts `search` or `k` as query aliases, and `ordering` or `o` for Pornhub ordering codes such as `mr`, `mv`, `tr`, `ht`, and `cm`.
 
@@ -129,6 +136,21 @@ console.log(byActor.videos);
 ```
 
 Returns the same `VideoListResult` shape as the other list methods. When the slug does not exist (Pornhub redirects unknown names to the generic `/pornstars` directory), the result is an empty `videos: []` listing instead of unrelated videos.
+
+### `videos.channels({ page, name })`
+
+Lists only the videos of a specific channel/studio (e.g. Brazzers). The name is slugified and loaded from the dedicated `/channels/<slug>` page.
+
+```javascript
+const byChannel = await pornhub.videos.channels({
+  page: 1,
+  name: 'Brazzers',
+});
+
+console.log(byChannel.videos);
+```
+
+Returns the same `VideoListResult` shape as the other list methods. Unknown channel slugs return a 404 from Pornhub, which the library surfaces as an empty `videos: []` listing.
 
 ### `videos.details({ url })`
 

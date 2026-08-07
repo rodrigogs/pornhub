@@ -115,3 +115,8 @@ export type PornstarOptions = {
   page?: number;
   name?: string;
 };
+
+export type ChannelOptions = {
+  page?: number;
+  name?: string;
+};

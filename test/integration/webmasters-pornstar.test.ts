@@ -112,3 +112,29 @@ describe.skipIf(probe.pornstarBlocked)(
     });
   },
 );
+
+describe('Pornhub live integration — channel listings', () => {
+  it('lists videos for a known channel', async () => {
+    const result = await pornhub.videos.channels({
+      page: 1,
+      name: 'Brazzers',
+    });
+
+    expect(result.videos.length).toBeGreaterThan(0);
+    expect(result.pagination.page).toBe(1);
+    expect(result.videos[0].url).toContain('/view_video.php?viewkey=');
+    expect(result.videos[0].videoId.length).toBeGreaterThan(0);
+    expect(result.videos[0].title.length).toBeGreaterThan(0);
+  });
+
+  it('returns an empty listing for an unknown channel slug', async () => {
+    const result = await pornhub.videos.channels({
+      page: 1,
+      name: 'this channel does not exist 12345',
+    });
+
+    // Unknown channel slugs return a 404 page, which the page guard rejects.
+    expect(result.videos).toHaveLength(0);
+    expect(result.hasNext()).toBe(false);
+  });
+});
