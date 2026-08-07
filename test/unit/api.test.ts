@@ -502,4 +502,47 @@ describe('public api', () => {
     expect(blankDetail.uploadDate).toBe('');
     expect(blankDetail.thumbnailUrls).toEqual([]);
   });
+
+  it('exposes configure() on the public api', async () => {
+    const configureRequest = vi.fn();
+    const createRequest = () => ({ get: requestGet });
+
+    vi.doMock('../../src/base.js', () => ({
+      BASE_URL: 'https://www.pornhub.com',
+      configureRequest,
+      createRequest,
+      delay: mockDelay,
+      resolveUrl: mockResolveUrl,
+      default: {
+        BASE_URL: 'https://www.pornhub.com',
+        configureRequest,
+        createRequest,
+        delay: mockDelay,
+        resolveUrl: mockResolveUrl,
+      },
+    }));
+
+    const { default: api } = await import('../../src/index.js');
+
+    api.configure({ minRequestIntervalMs: 250, proxyUrl: 'http://p:8080' });
+
+    expect(configureRequest).toHaveBeenCalledWith({
+      minRequestIntervalMs: 250,
+      proxyUrl: 'http://p:8080',
+    });
+
+    api.configure({ minRequestIntervalMs: 0 });
+
+    expect(configureRequest).toHaveBeenCalledWith({
+      minRequestIntervalMs: 0,
+      proxyUrl: undefined,
+    });
+
+    api.configure({});
+
+    expect(configureRequest).toHaveBeenCalledWith({
+      minRequestIntervalMs: 0,
+      proxyUrl: undefined,
+    });
+  });
 });

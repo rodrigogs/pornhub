@@ -12,6 +12,7 @@ export type TransportOptions = {
   throwHttpErrors: true;
   retry: { limit: 0 };
   timeout: { request: number };
+  proxyUrl?: string;
 };
 
 export type Transport = (
@@ -23,6 +24,15 @@ export type RequestOptions = {
   sleep?: (milliseconds: number) => Promise<void>;
   transport?: Transport;
   random?: () => number;
+  now?: () => number;
+  /** Route requests through an HTTP(S) proxy (e.g. to avoid datacenter-IP blocks). */
+  proxyUrl?: string;
+  /**
+   * Minimum spacing between request starts, shared across every createRequest
+   * instance in the process (module-level throttle). Use to stay polite
+   * against rate limiters. Default 0 (disabled).
+   */
+  minRequestIntervalMs?: number;
 };
 
 export type RequestResponse = {

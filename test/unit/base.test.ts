@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import base, {
   BASE_URL,
+  configureRequest,
   createRequest,
   delay,
+  resetSharedThrottle,
   resolveUrl,
   shouldRetry,
 } from '../../src/base.js';
@@ -11,6 +13,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.resetModules();
   vi.restoreAllMocks();
+  resetSharedThrottle();
 });
 
 describe('base helpers', () => {
@@ -177,5 +180,149 @@ describe('base helpers', () => {
       url: 'https://www.pornhub.com/video',
     });
     expect(gotScraping).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes the proxy url to the transport', async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+    const request = createRequest({
+      transport,
+      proxyUrl: 'http://proxy.local:8080',
+    });
+
+    await request.get('/video');
+
+    expect(transport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        proxyUrl: 'http://proxy.local:8080',
+      }),
+    );
+  });
+
+  it('throttles request starts with a shared minimum interval', async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    let now = 1_000;
+    const request = createRequest({
+      transport,
+      sleep,
+      now: () => now,
+      minRequestIntervalMs: 500,
+    });
+
+    await request.get('/video'); // first request: no wait
+    expect(sleep).not.toHaveBeenCalled();
+
+    now += 300; // 300ms later — must wait 200ms
+    await request.get('/video');
+    expect(sleep).toHaveBeenCalledTimes(1);
+    expect(sleep).toHaveBeenLastCalledWith(200);
+
+    now += 700; // 700ms later — no wait needed
+    await request.get('/video');
+    expect(sleep).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares the throttle across request instances', async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    let now = 5_000;
+
+    const first = createRequest({
+      transport,
+      sleep,
+      now: () => now,
+      minRequestIntervalMs: 1000,
+    });
+    const second = createRequest({ transport, sleep, now: () => now });
+
+    await first.get('/video'); // t=5000
+    now += 200;
+    await second.get('/video'); // t=5200 — must wait 800ms (shared state)
+
+    expect(sleep).toHaveBeenCalledTimes(1);
+    expect(sleep).toHaveBeenLastCalledWith(800);
+  });
+
+  it('takes the largest requested interval across instances', async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    let now = 10_000;
+
+    createRequest({
+      transport,
+      sleep,
+      now: () => now,
+      minRequestIntervalMs: 400,
+    });
+    createRequest({
+      transport,
+      sleep,
+      now: () => now,
+      minRequestIntervalMs: 900,
+    });
+
+    const third = createRequest({ transport, sleep, now: () => now });
+
+    await third.get('/video'); // first request: no wait
+    now += 500; // within 900ms window
+    await third.get('/video');
+
+    expect(sleep).toHaveBeenCalledTimes(1);
+    expect(sleep).toHaveBeenLastCalledWith(400);
+  });
+
+  it('applies the shared config from configureRequest to plain clients', async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    let now = 20_000;
+
+    configureRequest({ minRequestIntervalMs: 700 });
+
+    const request = createRequest({ transport, sleep, now: () => now });
+
+    await request.get('/video'); // first request: no wait
+    now += 300; // within 700ms window
+    await request.get('/video');
+
+    expect(sleep).toHaveBeenCalledTimes(1);
+    expect(sleep).toHaveBeenLastCalledWith(400);
+  });
+
+  it('routes plain clients through the shared proxy url', async () => {
+    const transport = vi.fn().mockResolvedValue({
+      body: 'ok',
+      statusCode: 200,
+      url: 'https://www.pornhub.com/video',
+    });
+
+    configureRequest({ proxyUrl: 'http://shared-proxy:3128' });
+
+    const request = createRequest({ transport });
+
+    await request.get('/video');
+
+    expect(transport).toHaveBeenCalledWith(
+      expect.objectContaining({ proxyUrl: 'http://shared-proxy:3128' }),
+    );
   });
 });

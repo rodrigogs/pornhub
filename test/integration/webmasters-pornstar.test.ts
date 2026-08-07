@@ -138,3 +138,29 @@ describe('Pornhub live integration — channel listings', () => {
     expect(result.hasNext()).toBe(false);
   });
 });
+
+describe('Pornhub live integration — category listings', () => {
+  it('lists videos for a known category', async () => {
+    const result = await pornhub.videos.category({
+      page: 1,
+      id: 7, // "Big Dick"
+    });
+
+    expect(result.videos.length).toBeGreaterThan(0);
+    expect(result.pagination.page).toBe(1);
+    expect(result.videos[0].url).toContain('/view_video.php?viewkey=');
+    expect(result.videos[0].videoId.length).toBeGreaterThan(0);
+    expect(result.videos[0].title.length).toBeGreaterThan(0);
+  });
+
+  it('returns an empty listing for an unknown category id', async () => {
+    const result = await pornhub.videos.category({
+      page: 1,
+      id: 999999,
+    });
+
+    // Unknown category ids return a 404 page, surfaced as an empty listing.
+    expect(result.videos).toHaveLength(0);
+    expect(result.hasNext()).toBe(false);
+  });
+});

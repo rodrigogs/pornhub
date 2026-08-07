@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `videos.category({ id, page })` — category video listings by numeric id, with 404 handling that surfaces an empty listing for unknown ids.
+- `pornhub.configure({ minRequestIntervalMs, proxyUrl })` — process-wide crawl ergonomics: a shared minimum interval between request starts (rate limiting, shared across all clients) and optional HTTP(S) proxy routing.
+- Real-HTML fixtures (`test/fixtures/`) pinning the current site layout, with parser tests that fail when Pornhub changes its HTML structure. Regenerate with `scripts/refresh-fixtures.sh`.
+- npm version/downloads/license badges in the README.
+
 ## [0.5.0] - 2026-08-07
 
 ### Added

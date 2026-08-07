@@ -2,6 +2,7 @@ import { type Cheerio, type CheerioAPI, load } from 'cheerio';
 import type { Element } from 'domhandler';
 import base from './base.js';
 import type {
+  CategoryOptions,
   ChannelOptions,
   DetailsInput,
   DetailsManyOptions,
@@ -19,11 +20,13 @@ import type {
 } from './types/videos.js';
 
 export type {
+  CategoryOptions,
   ChannelOptions,
   DetailsInput,
   DetailsManyOptions,
   Pagination,
   PornhubVideoOrdering,
+  PornstarOptions,
   SearchOptions,
   VideoDetailsBatchFailure,
   VideoDetailsBatchItem,
@@ -1117,7 +1120,47 @@ const channels = async ({
   }
 };
 
+const assertCategoryId = (id: number): void => {
+  if (!Number.isInteger(id) || id < 1) {
+    throw new Error(`Invalid category id: ${id}`);
+  }
+};
+
+const category = async ({
+  page = 1,
+  id,
+}: CategoryOptions = {}): Promise<VideoListResult> => {
+  assertPage(page);
+  assertCategoryId(id ?? 0);
+
+  try {
+    return await loadListingPage(
+      page,
+      [buildPagedPath('/video', page, { c: String(id) })],
+      (targetPage) =>
+        category({
+          page: targetPage,
+          id,
+        }),
+    );
+  } catch (error) {
+    // Unknown category ids return a real HTTP 404. Surface an empty listing
+    // instead of an exception so callers can fall back gracefully.
+    const statusCode = (error as { response?: { statusCode?: number } })
+      .response?.statusCode;
+
+    if (statusCode === 404) {
+      return buildEmptyListing(page, (targetPage) =>
+        category({ page: targetPage, id }),
+      );
+    }
+
+    throw error;
+  }
+};
+
 const videos = {
+  category,
   channels,
   details,
   detailsMany,
@@ -1132,6 +1175,7 @@ const videos = {
 
 /** @internal */
 export const __private__ = {
+  assertCategoryId,
   assertPage,
   assertVideoUrl,
   buildListResult,

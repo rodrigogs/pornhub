@@ -1,6 +1,9 @@
 import pornhub from './pornhub.js';
 
+export type { PornhubConfig } from './pornhub.js';
+
 export type {
+  CategoryOptions,
   ChannelOptions,
   DetailsInput,
   DetailsManyOptions,

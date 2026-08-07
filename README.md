@@ -1,8 +1,11 @@
 # pornhub
 
+[![npm version](https://img.shields.io/npm/v/pornhub.svg)](https://www.npmjs.com/package/pornhub)
+[![npm downloads](https://img.shields.io/npm/dm/pornhub.svg)](https://www.npmjs.com/package/pornhub)
 [![CI](https://github.com/rodrigogs/pornhub/actions/workflows/node.js.yml/badge.svg)](https://github.com/rodrigogs/pornhub/actions/workflows/node.js.yml)
 [![codecov](https://codecov.io/gh/rodrigogs/pornhub/graph/badge.svg)](https://codecov.io/gh/rodrigogs/pornhub)
 [![CodeQL](https://github.com/rodrigogs/pornhub/actions/workflows/codeql.yml/badge.svg)](https://github.com/rodrigogs/pornhub/actions/workflows/codeql.yml)
+[![license](https://img.shields.io/npm/l/pornhub.svg)](https://github.com/rodrigogs/pornhub/blob/main/LICENSE)
 
 A [Node.js](https://nodejs.org) library for the [pornhub.com](https://www.pornhub.com) API.
 
@@ -119,6 +122,7 @@ Available methods:
 - `videos.search({ page, search, k, ordering, o })`
 - `videos.pornstar({ page, name })`
 - `videos.channels({ page, name })`
+- `videos.category({ page, id })`
 
 `search()` accepts `search` or `k` as query aliases, and `ordering` or `o` for Pornhub ordering codes such as `mr`, `mv`, `tr`, `ht`, and `cm`.
 
@@ -151,6 +155,21 @@ console.log(byChannel.videos);
 ```
 
 Returns the same `VideoListResult` shape as the other list methods. Unknown channel slugs return a 404 from Pornhub, which the library surfaces as an empty `videos: []` listing.
+
+### `videos.category({ page, id })`
+
+Lists the videos of a category by its numeric id (e.g. `7` for "Big Dick").
+
+```javascript
+const byCategory = await pornhub.videos.category({
+  page: 1,
+  id: 7,
+});
+
+console.log(byCategory.videos);
+```
+
+Returns the same `VideoListResult` shape as the other list methods. Unknown category ids return a 404, surfaced as an empty `videos: []` listing.
 
 ### `videos.details({ url })`
 
@@ -323,6 +342,26 @@ Lists detailed pornstar records (`star_name`, `star_thumb`, `star_url`, `gender`
 
 ```javascript
 const pornstars = await pornhub.webmasters.pornstarsDetailed();
+```
+
+## Crawl ergonomics
+
+### `pornhub.configure({ minRequestIntervalMs, proxyUrl })`
+
+Configures process-wide request behavior. Applies to every request the library makes from this process (both `videos.*` and `webmasters.*`).
+
+```javascript
+import pornhub from 'pornhub';
+
+pornhub.configure({
+  // Minimum spacing between request starts (milliseconds). Keeps the
+  // library polite against rate limiters and is shared across every
+  // concurrent client in the process.
+  minRequestIntervalMs: 250,
+  // Route requests through an HTTP(S) proxy — useful when running from a
+  // datacenter IP that Pornhub blocks (e.g. CI runners).
+  proxyUrl: 'http://user:pass@proxy.example.com:8080',
+});
 ```
 
 ## Development

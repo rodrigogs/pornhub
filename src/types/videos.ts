@@ -120,3 +120,8 @@ export type ChannelOptions = {
   page?: number;
   name?: string;
 };
+
+export type CategoryOptions = {
+  page?: number;
+  id?: number;
+};
