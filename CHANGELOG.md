@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Retry backoff is now exponential with full jitter instead of linear.
 - Biome upgraded to 2.5.7; npm audit clean (0 vulnerabilities).
 
+## [0.2.2] - 2026-08-06
+
+### Added
+
+- `videos.pornstar({ name, page })` — actor video listings from the dedicated `/pornstar/<slug>` page, with a page guard that rejects redirects to the generic `/pornstars` directory (unknown slugs return an empty listing instead of unrelated videos).
+
+### Changed
+
+- Merged the standalone `test-results` CI job into `coverage` (both ran unit tests and uploaded to Codecov), cutting the workflow from 4 to 3 jobs and reducing exposure to runner scarcity.
+
 ## [0.2.1] - 2026-08-06
 
 ### Changed
@@ -52,7 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full unit coverage and hardened CI.
 
 [Unreleased]: https://github.com/rodrigogs/pornhub/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/rodrigogs/pornhub/compare/v0.2.1...v0.3.0
+[0.3.0]: https://github.com/rodrigogs/pornhub/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/rodrigogs/pornhub/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/rodrigogs/pornhub/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rodrigogs/pornhub/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rodrigogs/pornhub/releases/tag/v0.1.0
