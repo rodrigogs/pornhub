@@ -20,11 +20,28 @@ export type {
 
 export type {
   WebmastersCategory,
+  WebmastersCategoryListItem,
+  WebmastersCategoryListResult,
+  WebmastersDeletedVideo,
+  WebmastersDeletedVideosResult,
   WebmastersPornstar,
+  WebmastersPornstarDetail,
+  WebmastersPornstarDetailItem,
+  WebmastersPornstarDetailListResult,
+  WebmastersPornstarListItem,
+  WebmastersPornstarListResult,
+  WebmastersSearchOptions,
   WebmastersTag,
+  WebmastersTagListResult,
   WebmastersThumb,
+  WebmastersThumbSize,
   WebmastersVideo,
+  WebmastersVideoActiveResult,
   WebmastersVideoByIdResult,
+  WebmastersVideoEmbedResult,
+  WebmastersVideoOrdering,
+  WebmastersVideoPeriod,
+  WebmastersVideoSearchResult,
 } from './types/webmasters.js';
 
 const api = pornhub;

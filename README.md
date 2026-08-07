@@ -226,6 +226,83 @@ Returns `null` when the id is invalid or the endpoint returns no video data:
 }
 ```
 
+### `webmasters.search(search, options)`
+
+Searches videos through the webmasters API and returns structured JSON results (same shape as `videoById`, but an array). Accepts the same filters as the site search page:
+
+```javascript
+const results = await pornhub.webmasters.search('latina', {
+  page: 2,
+  tags: ['anal', 'solo'],
+  category: ['teen'],
+  stars: ['Riley Reid'],
+  ordering: 'newest',   // featured | newest | mostviewed | rating
+  period: 'weekly',     // weekly | monthly | alltime
+  thumbsize: 'medium',  // small | medium | large | small_hd | medium_hd | large_hd
+});
+```
+
+Returns an array of `WebmastersVideo` (empty array when no results or the API is unreachable).
+
+### `webmasters.isVideoActive(idOrUrl)`
+
+Checks whether a video still exists. Accepts a raw viewkey or a full watch-page URL. Returns `true`/`false` (deleted and unknown videos report `false`).
+
+```javascript
+const active = await pornhub.webmasters.isVideoActive('6a636dfc70d39');
+const activeFromUrl = await pornhub.webmasters.isVideoActive(
+  'https://www.pornhub.com/view_video.php?viewkey=6a636dfc70d39',
+);
+```
+
+### `webmasters.videoEmbedCode(idOrUrl)`
+
+Returns the unescaped HTML embed code (`<iframe ...>`) for a video, or `null` when the video does not exist.
+
+```javascript
+const code = await pornhub.webmasters.videoEmbedCode('6a636dfc70d39');
+```
+
+### `webmasters.deletedVideos(page)`
+
+Lists recently deleted videos (most recent first), each `{ vkey, deleted_on }`.
+
+```javascript
+const deleted = await pornhub.webmasters.deletedVideos(1);
+```
+
+### `webmasters.tags(letter)`
+
+Lists tag names starting with the given letter (`a`–`z`, default `'a'`). This endpoint is heavy — cache the result locally.
+
+```javascript
+const tags = await pornhub.webmasters.tags('s');
+```
+
+### `webmasters.categories()`
+
+Lists all video categories sorted by id, each `{ id, category }`.
+
+```javascript
+const categories = await pornhub.webmasters.categories();
+```
+
+### `webmasters.pornstars()`
+
+Lists all pornstar names.
+
+```javascript
+const pornstars = await pornhub.webmasters.pornstars();
+```
+
+### `webmasters.pornstarsDetailed()`
+
+Lists detailed pornstar records (`star_name`, `star_thumb`, `star_url`, `gender`, `videos_count_all`). This endpoint is very heavy (20K+ records) — cache the result locally.
+
+```javascript
+const pornstars = await pornhub.webmasters.pornstarsDetailed();
+```
+
 ## Development
 
 ```bash
